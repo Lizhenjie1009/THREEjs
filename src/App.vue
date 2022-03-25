@@ -9,15 +9,17 @@
   import { Engine } from './ts/Engine'
   import { box, sphere, cyline, moreSphere } from './ts/AllObject';
   import { onMounted, ref } from 'vue'
-  const threeRef = ref(null)
-  let ENG = null
+  const threeRef = ref({} as HTMLElement)
+  let ENG: Engine = {} as Engine
 
   onMounted(() => {
     ENG = new Engine(threeRef.value)
+    console.log();
+    
     ENG.addObject(box, sphere, cyline)
     for (let i = 0; i < 10; i++) {
       for (let j = 0; j < 10; j++) {
-        ENG.addObject(moreSphere(5 * i, 5 * j))
+        ENG.addObject(moreSphere(5 * i, 5 * j, 10 * i, ENG.scene))
       }
     }
   })

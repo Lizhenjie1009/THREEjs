@@ -14,7 +14,10 @@ import {
   Object3D,
   Vector2,
   Raycaster,
-  ObjectLoader
+  ObjectLoader,
+  BufferGeometry,
+  LineBasicMaterial,
+  Line
 } from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -82,18 +85,41 @@ export class Engine {
     dom.appendChild(this.renderer.domElement)
     dom.appendChild(statsDom)
 
+    // 添加线
+    // const points = [];
+    // points.push( new Vector3( - 20, 0, 0 ) );
+    // points.push( new Vector3( 0, 20, 0 ) );
+    // points.push( new Vector3( 10, 0, 0 ) );
+    // points.push( new Vector3( 0, 10, 0 ) );
+    // const material = new LineBasicMaterial( { color: 0xff00ff } );
+    // const geometry = new BufferGeometry().setFromPoints( points );
+    // const line = new Line( geometry, material );
+    // this.scene.add(line)
+
+
     // 射线发射器
     const raycaster: Raycaster = new Raycaster()
     // 变换控制器
     const transformControls: TransformControls = new TransformControls(this.camera, this.renderer.domElement)
     this.scene.add(transformControls)
-
+    // let clickCancle = false // 点击事件冲突解决
+    // transformControls.addEventListener('mouseDown', e => {
+    //   console.log(e, 11111);
+    //   clickCancle = true
+    // })
+    // transformControls.addEventListener('mouseUp', e => {
+    //   console.log(e, 22222);
+    //   // clickCancle = true
+    // })
+    
     // const mouse = new Vector2()
     let x = 0
     let y = 0
     let width = 0
     let height = 0
-    this.renderer.domElement.addEventListener('contextmenu', (e) => {
+    let cacheObject: Object3D | null = null
+    this.renderer.domElement.addEventListener('click', (e) => {
+      // if (clickCancle) clickCancle = false
       e.preventDefault()
       x = e.offsetX
       y = e.offsetY
@@ -103,12 +129,45 @@ export class Engine {
       this.mouse.y = -y * 2 / height + 1
       console.log(this.mouse.x, this.mouse.y);
       raycaster.setFromCamera(this.mouse, this.camera)
+
+      // 解决选中transform
+      this.scene.remove(transformControls)
       const intersection = raycaster.intersectObjects(this.scene.children)
+      this.scene.add(transformControls)
+
       if (intersection.length) {
         console.log(intersection);
         const obj = intersection[0].object
         transformControls.attach(obj)
+
+        if (cacheObject !== obj) {
+          if (cacheObject) {
+            cacheObject.dispatchEvent({ type: 'mouseleave' })
+          }
+          obj.dispatchEvent({ type: 'mouseenter' })
+        } else if (cacheObject === obj) {
+          obj.dispatchEvent({ type: 'mousemove' })
+        }
+        cacheObject = obj
+      } else {
+        if (cacheObject) {
+          cacheObject.dispatchEvent({ type: 'mouseleave' })
+        }
+        cacheObject = null
       }
+    })
+
+    // 自定义变换
+    document.addEventListener('keydown', e => {
+      console.log(e);
+      if (e.key === 'r') {
+        transformControls.mode = 'rotate'
+      } else if (e.key === 'e') {
+        transformControls.mode = 'scale'
+      } else if (e.key === 't') {
+        transformControls.mode = 'translate'
+      }
+      
     })
 
     
@@ -162,6 +221,7 @@ export class Engine {
       // 变换控制器
       const transformControls: TransformControls = new TransformControls(this.camera, this.renderer.domElement)
       this.scene.add(transformControls)
+      
       // const mouse = new Vector2()
       let x = 0
       let y = 0
